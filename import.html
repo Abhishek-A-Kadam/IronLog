@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>IronLog — Import History</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;color:#fff;max-width:480px;margin:0 auto;padding:28px 20px;}
+h1{font-size:26px;font-weight:700;color:#ff6b35;margin-bottom:6px;}
+.sub{color:#8e8e93;font-size:14px;margin-bottom:20px;line-height:1.5;}
+.month-label{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.6px;margin:16px 0 6px;}
+.workout-card{background:#1c1c1e;border-radius:14px;padding:15px;margin-bottom:8px;border:1px solid #3a3a3c;}
+.w-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.w-name{font-size:15px;font-weight:700;}
+.w-date{font-size:13px;color:#8e8e93;}
+.ex-row{font-size:13px;color:#8e8e93;padding:3px 0;border-top:1px solid #2c2c2e;margin-top:3px;}
+.ex-row span{color:#fff;font-weight:600;}
+.btn{display:block;width:100%;padding:16px;background:#ff6b35;color:#fff;border:none;border-radius:14px;font-size:18px;font-weight:700;cursor:pointer;margin-top:20px;font-family:inherit;}
+.btn:active{opacity:.8;}
+.btn:disabled{background:#3a3a3c;color:#8e8e93;cursor:default;}
+.done{text-align:center;padding:32px 20px;display:none;}
+.done-icon{font-size:56px;margin-bottom:12px;}
+.done-title{font-size:22px;font-weight:700;color:#30d158;margin-bottom:6px;}
+.done-sub{color:#8e8e93;font-size:14px;}
+</style>
+</head>
+<body>
+
+<h1>📥 Import Workouts</h1>
+<p class="sub">10 historical workouts ready to load — Push, Pull, and Legs from May–June 2026. Already imported? Running this again won't create duplicates.</p>
+
+<div id="preview"></div>
+<button class="btn" id="import-btn" onclick="doImport()">Import 10 Workouts →</button>
+
+<div class="done" id="done-section">
+  <div class="done-icon">💪</div>
+  <div class="done-title">Done!</div>
+  <div class="done-sub" id="done-sub">Redirecting to IronLog...</div>
+</div>
+
+<script>
+var WORKOUTS = [
+  // ─── MAY 31 — LEGS ───────────────────────────────────────
+  {
+    id: 'hist006', name: 'Leg Day', focusId: 'legs', date: '2026-05-31',
+    exercises: [
+      {
+        id:'h6e1', name:'Hack Squat', equip:'machine', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h6s1', w:0,  reps:10, done:true},
+          {id:'h6s2', w:20, reps:10, done:true},
+          {id:'h6s3', w:25, reps:8,  done:true}
+        ]
+      },
+      {
+        id:'h6e2', name:'Calf Raise', equip:'bodyweight', weightMode:'bodyweight', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h6s4', w:'', reps:20, done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 2 — PUSH ────────────────────────────────────────
+  {
+    id: 'hist001', name: 'Push Day', focusId: 'push', date: '2026-06-02',
+    exercises: [
+      {
+        id:'h1e1', name:'Bench Press', equip:'barbell', weightMode:'direct', barWeight:45, unit:'lbs',
+        sets:[
+          {id:'h1s1', w:70, reps:10, done:true},
+          {id:'h1s2', w:80, reps:5,  done:true},
+          {id:'h1s3', w:70, reps:5,  done:true},
+          {id:'h1s4', w:70, reps:6,  done:true}
+        ]
+      },
+      {
+        id:'h1e2', name:'Lateral Raise', equip:'dumbbell', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h1s5', w:12.5, reps:10, done:true},
+          {id:'h1s6', w:15,   reps:10, done:true},
+          {id:'h1s7', w:17.5, reps:10, done:true}
+        ]
+      },
+      {
+        id:'h1e3', name:'Tricep Pushdown', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h1s8',  w:35, reps:10, done:true},
+          {id:'h1s9',  w:40, reps:8,  done:true},
+          {id:'h1s10', w:40, reps:6,  done:true},
+          {id:'h1s11', w:40, reps:5,  done:true}
+        ]
+      },
+      {
+        id:'h1e4', name:'Pec Deck / Machine Fly', equip:'machine', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h1s12', w:70, reps:10, done:true},
+          {id:'h1s13', w:80, reps:8,  done:true},
+          {id:'h1s14', w:80, reps:8,  done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 3 — PULL ────────────────────────────────────────
+  {
+    id: 'hist007', name: 'Pull Day', focusId: 'pull', date: '2026-06-03',
+    exercises: [
+      {
+        id:'h7e1', name:'Lat Pulldown', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h7s1', w:100, reps:10, done:true},
+          {id:'h7s2', w:110, reps:8,  done:true},
+          {id:'h7s3', w:120, reps:6,  done:true},
+          {id:'h7s4', w:110, reps:8,  done:true}
+        ]
+      },
+      {
+        id:'h7e2', name:'Seated Cable Row', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h7s5', w:100, reps:10, done:true},
+          {id:'h7s6', w:120, reps:8,  done:true},
+          {id:'h7s7', w:130, reps:6,  done:true},
+          {id:'h7s8', w:140, reps:7,  done:true}
+        ]
+      },
+      {
+        id:'h7e3', name:'Concentration Curl', equip:'dumbbell', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h7s9',  w:15,   reps:10, done:true},
+          {id:'h7s10', w:17.5, reps:8,  done:true},
+          {id:'h7s11', w:20,   reps:6,  done:true},
+          {id:'h7s12', w:22.5, reps:'', done:false}
+        ]
+      },
+      {
+        id:'h7e4', name:'Hammer Curl', equip:'dumbbell', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h7s13', w:25,   reps:6, done:true},
+          {id:'h7s14', w:27.5, reps:4, done:true},
+          {id:'h7s15', w:30,   reps:3, done:true},
+          {id:'h7s16', w:25,   reps:6, done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 4 — LEGS ────────────────────────────────────────
+  {
+    id: 'hist002', name: 'Leg Day', focusId: 'legs', date: '2026-06-04',
+    exercises: [
+      {
+        id:'h2e1', name:'Leg Press', equip:'machine', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h2s1', w:90,  reps:10, done:true},
+          {id:'h2s2', w:90,  reps:10, done:true},
+          {id:'h2s3', w:180, reps:8,  done:true},
+          {id:'h2s4', w:215, reps:6,  done:true}
+        ]
+      },
+      {
+        id:'h2e2', name:'Leg Curl', equip:'machine', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h2s5', w:50, reps:10, done:true},
+          {id:'h2s6', w:55, reps:8,  done:true},
+          {id:'h2s7', w:60, reps:6,  done:true},
+          {id:'h2s8', w:65, reps:4,  done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 5 — PULL ────────────────────────────────────────
+  {
+    id: 'hist008', name: 'Pull Day', focusId: 'pull', date: '2026-06-05',
+    exercises: [
+      {
+        id:'h8e1', name:'Lat Pulldown', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h8s1', w:100, reps:10, done:true},
+          {id:'h8s2', w:110, reps:8,  done:true},
+          {id:'h8s3', w:120, reps:6,  done:true},
+          {id:'h8s4', w:130, reps:4,  done:true}
+        ]
+      },
+      {
+        id:'h8e2', name:'Seated Cable Row', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h8s5', w:100, reps:10, done:true},
+          {id:'h8s6', w:120, reps:8,  done:true},
+          {id:'h8s7', w:130, reps:6,  done:true},
+          {id:'h8s8', w:140, reps:6,  done:true}
+        ]
+      },
+      {
+        id:'h8e3', name:'Rear Delt Fly', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h8s9',  w:85, reps:8,  done:true},
+          {id:'h8s10', w:55, reps:10, done:true},
+          {id:'h8s11', w:70, reps:8,  done:true},
+          {id:'h8s12', w:75, reps:8,  done:true}
+        ]
+      },
+      {
+        id:'h8e4', name:'EZ Bar Curl', equip:'ezbar', weightMode:'direct', barWeight:25, unit:'lbs',
+        sets:[
+          {id:'h8s13', w:10, reps:10, done:true},
+          {id:'h8s14', w:15, reps:6,  done:true},
+          {id:'h8s15', w:15, reps:4,  done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 6 — PUSH ────────────────────────────────────────
+  {
+    id: 'hist003', name: 'Push Day', focusId: 'push', date: '2026-06-06',
+    exercises: [
+      {
+        id:'h3e1', name:'Bench Press', equip:'barbell', weightMode:'direct', barWeight:45, unit:'lbs',
+        sets:[
+          {id:'h3s1', w:70, reps:10, done:true},
+          {id:'h3s2', w:80, reps:5,  done:true},
+          {id:'h3s3', w:90, reps:4,  done:true},
+          {id:'h3s4', w:90, reps:2,  done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 8 — PUSH ────────────────────────────────────────
+  {
+    id: 'hist004', name: 'Push Day', focusId: 'push', date: '2026-06-08',
+    exercises: [
+      {
+        id:'h4e1', name:'Bench Press', equip:'barbell', weightMode:'direct', barWeight:45, unit:'lbs',
+        sets:[
+          {id:'h4s1', w:45, reps:10, done:true},
+          {id:'h4s2', w:70, reps:10, done:true},
+          {id:'h4s3', w:80, reps:8,  done:true},
+          {id:'h4s4', w:90, reps:6,  done:true},
+          {id:'h4s5', w:90, reps:2,  done:true}
+        ]
+      },
+      {
+        id:'h4e2', name:'Lateral Raise', equip:'dumbbell', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h4s6', w:20, reps:10, done:true},
+          {id:'h4s7', w:25, reps:6,  done:true},
+          {id:'h4s8', w:25, reps:6,  done:true}
+        ]
+      },
+      {
+        id:'h4e3', name:'Overhead Press', equip:'barbell', weightMode:'direct', barWeight:45, unit:'lbs',
+        sets:[
+          {id:'h4s9',  w:60, reps:10, done:true},
+          {id:'h4s10', w:65, reps:8,  done:true},
+          {id:'h4s11', w:70, reps:3,  done:true},
+          {id:'h4s12', w:70, reps:2,  done:true}
+        ]
+      },
+      {
+        id:'h4e4', name:'Tricep Pushdown', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h4s13', w:40, reps:10, done:true},
+          {id:'h4s14', w:45, reps:7,  done:true},
+          {id:'h4s15', w:50, reps:3,  done:true},
+          {id:'h4s16', w:50, reps:3,  done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 11 — PULL ───────────────────────────────────────
+  {
+    id: 'hist009', name: 'Pull Day', focusId: 'pull', date: '2026-06-11',
+    exercises: [
+      {
+        id:'h9e1', name:'Lat Pulldown', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h9s1', w:105, reps:10, done:true},
+          {id:'h9s2', w:110, reps:8,  done:true},
+          {id:'h9s3', w:120, reps:6,  done:true},
+          {id:'h9s4', w:130, reps:4,  done:true}
+        ]
+      },
+      {
+        id:'h9e2', name:'Rear Delt Fly', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h9s5', w:70, reps:10, done:true},
+          {id:'h9s6', w:80, reps:8,  done:true},
+          {id:'h9s7', w:85, reps:6,  done:true},
+          {id:'h9s8', w:90, reps:4,  done:true}
+        ]
+      },
+      {
+        id:'h9e3', name:'Incline Dumbbell Curl', equip:'dumbbell', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h9s9',  w:17.5, reps:10, done:true},
+          {id:'h9s10', w:20,   reps:8,  done:true},
+          {id:'h9s11', w:22.5, reps:4,  done:true},
+          {id:'h9s12', w:22.5, reps:3,  done:true}
+        ]
+      },
+      {
+        id:'h9e4', name:'Hammer Curl', equip:'dumbbell', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h9s13', w:27.5, reps:10, done:true},
+          {id:'h9s14', w:30,   reps:6,  done:true},
+          {id:'h9s15', w:30,   reps:4,  done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 12 — LEGS ───────────────────────────────────────
+  {
+    id: 'hist010', name: 'Leg Day', focusId: 'legs', date: '2026-06-12',
+    exercises: [
+      {
+        id:'h10e1', name:'Hack Squat', equip:'machine', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h10s1', w:90,  reps:10, done:true},
+          {id:'h10s2', w:110, reps:8,  done:true},
+          {id:'h10s3', w:140, reps:6,  done:true},
+          {id:'h10s4', w:140, reps:2,  done:true}
+        ]
+      },
+      {
+        id:'h10e2', name:'Leg Curl', equip:'machine', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h10s5', w:60, reps:10, done:true},
+          {id:'h10s6', w:70, reps:9,  done:true},
+          {id:'h10s7', w:85, reps:6,  done:true}
+        ]
+      },
+      {
+        id:'h10e3', name:'Calf Raise', equip:'bodyweight', weightMode:'bodyweight', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h10s8', w:'', reps:10, done:true},
+          {id:'h10s9', w:'', reps:10, done:true},
+          {id:'h10s10',w:'', reps:10, done:true}
+        ]
+      }
+    ]
+  },
+
+  // ─── JUN 13 — PUSH ───────────────────────────────────────
+  {
+    id: 'hist005', name: 'Push Day', focusId: 'push', date: '2026-06-13',
+    exercises: [
+      {
+        id:'h5e1', name:'Machine Shoulder Press', equip:'machine', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h5s1', w:60, reps:10, done:true},
+          {id:'h5s2', w:70, reps:8,  done:true},
+          {id:'h5s3', w:75, reps:6,  done:true},
+          {id:'h5s4', w:80, reps:4,  done:true}
+        ]
+      },
+      {
+        id:'h5e2', name:'Tricep Pushdown', equip:'cable', weightMode:'direct', barWeight:0, unit:'lbs',
+        sets:[
+          {id:'h5s5', w:40, reps:10, done:true},
+          {id:'h5s6', w:45, reps:6,  done:true},
+          {id:'h5s7', w:50, reps:3,  done:true},
+          {id:'h5s8', w:40, reps:6,  done:true}
+        ]
+      },
+      {
+        id:'h5e3', name:'Decline Bench Press', equip:'barbell', weightMode:'direct', barWeight:45, unit:'lbs',
+        sets:[
+          {id:'h5s9',  w:45, reps:10, done:true},
+          {id:'h5s10', w:50, reps:10, done:true},
+          {id:'h5s11', w:70, reps:8,  done:true},
+          {id:'h5s12', w:90, reps:3,  done:true},
+          {id:'h5s13', w:70, reps:6,  done:true}
+        ]
+      }
+    ]
+  }
+];
+
+function fmtDate(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+}
+
+var focusIcons = {push:'💥', pull:'🎯', legs:'🦵'};
+var html = '';
+var lastMonth = '';
+WORKOUTS.forEach(function(w) {
+  var m = new Date(w.date + 'T12:00:00').toLocaleDateString('en-US', {month:'long', year:'numeric'});
+  if (m !== lastMonth) { html += '<div class="month-label">'+m+'</div>'; lastMonth = m; }
+  var icon = focusIcons[w.focusId] || '🏋️';
+  html += '<div class="workout-card">';
+  html += '<div class="w-header"><div class="w-name">'+icon+' '+w.name+'</div><div class="w-date">'+fmtDate(w.date)+'</div></div>';
+  w.exercises.forEach(function(ex) {
+    var maxW = 0;
+    ex.sets.forEach(function(s) { if (parseFloat(s.w) > maxW) maxW = parseFloat(s.w); });
+    var weightStr = maxW > 0 ? ' · up to ' + maxW + ' lbs' : '';
+    html += '<div class="ex-row">'+ex.name+' — <span>'+ex.sets.length+' sets'+weightStr+'</span></div>';
+  });
+  html += '</div>';
+});
+document.getElementById('preview').innerHTML = html;
+
+function doImport() {
+  var btn = document.getElementById('import-btn');
+  btn.disabled = true;
+  btn.textContent = 'Importing...';
+  try {
+    var existing = [];
+    try { existing = JSON.parse(localStorage.getItem('il_workouts')) || []; } catch(e) {}
+    var existingIds = {};
+    existing.forEach(function(w) { existingIds[w.id] = true; });
+    var toAdd = WORKOUTS.filter(function(w) { return !existingIds[w.id]; });
+    var merged = toAdd.concat(existing);
+    merged.sort(function(a, b) { return b.date.localeCompare(a.date); });
+    localStorage.setItem('il_workouts', JSON.stringify(merged));
+    btn.style.display = 'none';
+    document.getElementById('done-section').style.display = 'block';
+    var msg = toAdd.length === 0 ? 'Already imported — nothing changed.' : 'Added ' + toAdd.length + ' workouts. Redirecting...';
+    document.getElementById('done-sub').textContent = msg;
+    setTimeout(function() { window.location.href = 'index.html'; }, 1800);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Import 10 Workouts →';
+    alert('Import failed: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
